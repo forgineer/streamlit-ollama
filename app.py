@@ -44,9 +44,9 @@ ollama: OllamaClient = OllamaClient(
 )
 
 # Configuration sidebar
-with st.sidebar:
-    st.title("Configuration")
-    ollama_host = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
+#with st.sidebar:
+#    st.title("Configuration")
+#    ollama_host = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
 
 # Main app
 st.title("Streamlit-Ollama")
@@ -65,9 +65,18 @@ if prompt := st.chat_input():
 
     # Call Ollama API
     with st.spinner("Thinking..."):
-        response = ollama.chat(model = 'gemma3:12b', messages = st.session_state.messages)
-    msg = response.message.content
-    
-    st.session_state.messages.append({"role": "assistant", "content": msg})
-    st.chat_message("assistant", avatar='images/ollama-assistant.png').write(msg)
-    
+        response_stream = ollama.chat(model = 'gemma3:12b', 
+                                      messages = st.session_state.messages,
+                                      stream=True)
+
+        with st.chat_message("assistant", avatar='images/ollama-assistant.png'):
+            def response_streamer():
+                 for chunk in response_stream:
+                     yield chunk.message.content
+
+            st.write_stream(response_streamer)  # Dynamically update the assistant's message
+
+    #st.write_stream(stream_response(response))
+    #msg = response.message.content
+    #st.session_state.messages.append({"role": "assistant", "content": msg})
+    #st.chat_message("assistant", avatar='images/ollama-assistant.png').write(msg)
