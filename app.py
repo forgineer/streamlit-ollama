@@ -49,22 +49,25 @@ with st.sidebar:
     ollama_host = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
 
 # Main app
-st.title("Streamlit-Ollama 🦙")
+st.title("Streamlit-Ollama")
 st.caption("A Streamlit chatbot powered by Ollama")
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
 
 for msg in st.session_state.messages:
-    st.chat_message(msg["role"]).write(msg["content"])
+    avatar = 'images/ollama-assistant.png' if msg["role"] == "assistant" else None
+    st.chat_message(msg["role"], avatar=avatar).write(msg["content"])
 
 if prompt := st.chat_input():
     st.session_state.messages.append({"role": "user", "content": prompt})
-    st.chat_message("user").write(prompt)
+    st.chat_message("user", avatar='😀').write(prompt)
 
-    response = ollama.chat(model = 'gemma3:12b', messages = st.session_state.messages)
+    # Call Ollama API
+    with st.spinner("Thinking..."):
+        response = ollama.chat(model = 'gemma3:12b', messages = st.session_state.messages)
     msg = response.message.content
     
     st.session_state.messages.append({"role": "assistant", "content": msg})
-    st.chat_message("assistant").write(msg)
+    st.chat_message("assistant", avatar='images/ollama-assistant.png').write(msg)
     
