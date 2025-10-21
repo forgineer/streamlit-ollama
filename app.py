@@ -75,8 +75,3 @@ if prompt := st.chat_input():
                      yield chunk.message.content
 
             st.write_stream(response_streamer)  # Dynamically update the assistant's message
-
-    #st.write_stream(stream_response(response))
-    #msg = response.message.content
-    #st.session_state.messages.append({"role": "assistant", "content": msg})
-    #st.chat_message("assistant", avatar='images/ollama-assistant.png').write(msg)
