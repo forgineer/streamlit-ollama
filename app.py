@@ -73,5 +73,6 @@ if prompt := st.chat_input():
             def response_streamer():
                  for chunk in response_stream:
                      yield chunk.message.content
-
-            st.write_stream(response_streamer)  # Dynamically update the assistant's message
+            
+            response: str = st.write_stream(response_streamer)  # Dynamically update the assistant's message
+            st.session_state.messages.append({"role": "assistant", "content": response})
