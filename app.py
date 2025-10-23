@@ -44,8 +44,12 @@ st.set_page_config(
 )
 
 # Load Ollama client configuration from Streamlit secrets
-ollama_client_secrets: dict = st.secrets.get("ollama_client", {})
-log.debug(f"Ollama client secrets: {ollama_client_secrets}")
+ollama_client_secrets: dict = {}
+try:
+    ollama_client_secrets: dict = st.secrets.get("ollama_client", {})
+    log.debug(f"Ollama client secrets: {ollama_client_secrets}")
+except Exception as e:
+    log.warning(f"Failed to load Ollama client secrets: {e}")
 
 # Extract host configuration. Assume localhost if not provided.
 ollama_host: str = ollama_client_secrets.get("host", "http://localhost:11434")
