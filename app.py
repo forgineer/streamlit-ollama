@@ -35,6 +35,7 @@ dictConfig({
 
 log = logging.getLogger('streamlit-ollama')
 
+# Ollama avatar and other constants
 ollama_avatar: str = 'images/ollama-avatar.png'
 
 # Streamlit page configuration
@@ -86,14 +87,13 @@ if prompt := st.chat_input(placeholder=selected_model):
     st.chat_message("user").write(prompt)
 
     log.debug(f'User prompt received: {prompt}')
-    log.info(f'Total messages in session: {st.session_state.messages}')
+    log.debug(f'Current messages in session: {st.session_state.messages}')
 
     # Call Ollama API
     with st.spinner("Thinking..."):
         log.debug(f'Using model: {selected_model} for chat response.')
         response_stream = ollama.chat(model = selected_model, 
-                                      #messages = st.session_state.messages, # TODO: Make this a configurable option
-                                      messages = [{"role": "user", "content": prompt}],
+                                      messages = st.session_state.messages,
                                       stream=True)
 
         # Within the chat message context...
