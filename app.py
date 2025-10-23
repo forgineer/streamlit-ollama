@@ -2,7 +2,7 @@ import logging
 import streamlit as st
 
 from logging.config import dictConfig
-from ollama import Client as OllamaClient, ListResponse
+from ollama import ChatResponse, Client as OllamaClient, ListResponse
 
 
 # Configure logging
@@ -45,15 +45,15 @@ st.set_page_config(
 )
 
 # Load Ollama client configuration from Streamlit secrets
-ollama_client_secrets: dict = {}
+streamlit_ollama_secrets: dict = {}
 try:
-    ollama_client_secrets: dict = st.secrets.get("ollama_client", {})
-    log.debug(f"Ollama client secrets: {ollama_client_secrets}")
+    streamlit_ollama_secrets: dict = st.secrets.get("streamlit_ollama", {})
+    log.debug(f"Ollama client secrets: {streamlit_ollama_secrets}")
 except Exception as e:
     log.warning(f"Failed to load Ollama client secrets: {e}")
 
 # Extract host configuration. Assume localhost if not provided.
-ollama_host: str = ollama_client_secrets.get("host", "http://localhost:11434")
+ollama_host: str = streamlit_ollama_secrets.get("host", "http://localhost:11434")
 log.debug(f"Ollama host: {ollama_host}")
 
 try:
@@ -71,7 +71,7 @@ with st.sidebar:
     selected_model = st.selectbox('Select a model', options=models, index=0)
     log.debug(f'Current model selected: {selected_model}')
 
-# Main app
+# Main app loop
 st.title('Streamlit-Ollama')
 st.caption('A Streamlit chatbot powered by Ollama.')
 
@@ -92,9 +92,9 @@ if prompt := st.chat_input(placeholder=selected_model):
     # Call Ollama API
     with st.spinner("Thinking..."):
         log.debug(f'Using model: {selected_model} for chat response.')
-        response_stream = ollama.chat(model = selected_model, 
-                                      messages = st.session_state.messages,
-                                      stream=True)
+        response_stream: ChatResponse = ollama.chat(model = selected_model, 
+                                                    messages = st.session_state.messages,
+                                                    stream=True)
 
         # Within the chat message context...
         with st.chat_message("assistant", avatar=ollama_avatar):
