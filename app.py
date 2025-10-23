@@ -2,7 +2,7 @@ import logging
 import streamlit as st
 
 from logging.config import dictConfig
-from ollama import Client as OllamaClient
+from ollama import Client as OllamaClient, ListResponse
 
 
 # Configure logging
@@ -35,44 +35,70 @@ dictConfig({
 
 log = logging.getLogger('streamlit-ollama')
 
-# Load Ollama client configuration from Streamlit secrets
-ollama_client: dict = st.secrets.get("ollama_client", {})
-log.debug(f"Ollama client config: {ollama_client}")
+ollama_avatar: str = 'images/ollama-avatar.png'
 
-ollama: OllamaClient = OllamaClient(
-    host="http://kryten3:11434"
+# Streamlit page configuration
+st.set_page_config(
+    page_title="Streamlit-Ollama",
+    page_icon=ollama_avatar
 )
 
+# Load Ollama client configuration from Streamlit secrets
+ollama_client_secrets: dict = st.secrets.get("ollama_client", {})
+log.debug(f"Ollama client secrets: {ollama_client_secrets}")
+
+# Extract host configuration. Assume localhost if not provided.
+ollama_host: str = ollama_client_secrets.get("host", "http://localhost:11434")
+log.debug(f"Ollama host: {ollama_host}")
+
+try:
+    ollama: OllamaClient = OllamaClient(
+        host=ollama_host
+    )
+except Exception as e:
+    log.error(f"Failed to initialize Ollama Client API: {e}")
+
 # Configuration sidebar
-#with st.sidebar:
-#    st.title("Configuration")
-#    ollama_host = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
+with st.sidebar:
+    st.title("Configuration")
+    list_models: ListResponse = ollama.list()
+    models: list = sorted([model.model for model in list_models.models]) # This is so hacky looking it hurts
+    selected_model = st.selectbox('Select a model', options=models, index=0)
+    log.debug(f'Current model selected: {selected_model}')
 
 # Main app
-st.title("Streamlit-Ollama")
-st.caption("A Streamlit chatbot powered by Ollama")
+st.title('Streamlit-Ollama')
+st.caption('A Streamlit chatbot powered by Ollama.')
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
 
 for msg in st.session_state.messages:
-    avatar = 'images/ollama-assistant.png' if msg["role"] == "assistant" else None
+    avatar = ollama_avatar if msg["role"] == "assistant" else None
     st.chat_message(msg["role"], avatar=avatar).write(msg["content"])
 
-if prompt := st.chat_input():
+if prompt := st.chat_input(placeholder=selected_model):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    st.chat_message("user", avatar='😀').write(prompt)
+    st.chat_message("user").write(prompt)
+
+    log.debug(f'User prompt received: {prompt}')
+    log.info(f'Total messages in session: {st.session_state.messages}')
 
     # Call Ollama API
     with st.spinner("Thinking..."):
-        response_stream = ollama.chat(model = 'gemma3:12b', 
-                                      messages = st.session_state.messages,
+        log.debug(f'Using model: {selected_model} for chat response.')
+        response_stream = ollama.chat(model = selected_model, 
+                                      #messages = st.session_state.messages, # TODO: Make this a configurable option
+                                      messages = [{"role": "user", "content": prompt}],
                                       stream=True)
 
-        with st.chat_message("assistant", avatar='images/ollama-assistant.png'):
+        # Within the chat message context...
+        with st.chat_message("assistant", avatar=ollama_avatar):
             def response_streamer():
+                 """Generator function to stream response chunks."""
                  for chunk in response_stream:
                      yield chunk.message.content
             
-            response: str = st.write_stream(response_streamer)  # Dynamically update the assistant's message
-            st.session_state.messages.append({"role": "assistant", "content": response})
+            # Stream the response and capture the full content for the session state
+            full_response: str = st.write_stream(response_streamer)  # Dynamically update the assistant's message
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
