@@ -28,7 +28,9 @@ except Exception as e:
 
 # Configuration sidebar
 with st.sidebar:
-    st.title("Configuration")
+    st.title('Streamlit-Ollama')
+
+    # Fetch available models from Ollama
     list_models: ListResponse = ollama.list()
     
     # This is so hacky looking it hurts
@@ -47,9 +49,6 @@ with st.sidebar:
 
 
 # Main app loop
-st.title('Streamlit-Ollama')
-st.caption('A Streamlit chatbot powered by Ollama.')
-
 # Initialize chat messages in session state rith a greeting
 if "messages" not in st.session_state:
     st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]

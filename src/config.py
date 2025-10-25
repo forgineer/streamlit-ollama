@@ -11,7 +11,7 @@ import logging
 STREAMLIT_OLLAMA_HOST: str = "http://localhost:11434"
 
 # Logging configurations
-STREAMLIT_OLLAMA_LOG_LEVEL: str = "DEBUG"
+STREAMLIT_OLLAMA_LOG_LEVEL: str = "INFO"
 STREAMLIT_OLLAMA_LOG_FORMAT: str = "%(asctime)s: %(levelname)s: %(message)s"
 
 # Path to the avatar image used for the assistant and user in the chat interface

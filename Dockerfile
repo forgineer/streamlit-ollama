@@ -1,19 +1,19 @@
 FROM python:3.12-slim
 
-WORKDIR /app
+WORKDIR /streamlit-ollama
 
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    curl \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+# Copy only the necessary files from the build context.
+# Users should clone the repo locally and run `docker build .` from the repo root.
+COPY pyproject.toml ./
+COPY src/app.py ./app.py
+COPY src/config.py ./config.py
+COPY images/ ./images/
 
-RUN git clone https://github.com/forgineer/streamlit-ollama.git .
-
+# Install Python dependencies defined in pyproject.toml
 RUN pip3 install .
 
 EXPOSE 8501
 
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+ENTRYPOINT ["streamlit", "run", "app.py"]
