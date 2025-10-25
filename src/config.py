@@ -1,5 +1,5 @@
 """
-This module contains configuration constants for the Streamlit-Ollama app.
+This module contains configuration constants and helpful functions for the Streamlit-Ollama app.
 
 The 'config.toml' file in the .streamlit directory is used for Streamlit-specific 
 configurations and will not accept custom configurations.
@@ -58,6 +58,3 @@ def logger(level: str = STREAMLIT_OLLAMA_LOG_LEVEL,
     })
 
     return logging.getLogger("streamlit-ollama")
-
-
-# This section is for actual configurations used in the app

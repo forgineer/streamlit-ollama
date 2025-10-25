@@ -1,5 +1,0 @@
-[server]
-runOnSave = true # Enable hot-reloading of the app when files are saved
-
-[client]
-toolbarMode = "viewer" # Set the toolbar mode to 'viewer' for a cleaner interface
