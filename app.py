@@ -1,103 +1,81 @@
-import logging
+import config
 import streamlit as st
 
-from logging.config import dictConfig
 from ollama import ChatResponse, Client as OllamaClient, ListResponse
 
 
 # Configure logging
 # Streamlit's logging doesn't seem to work as expected; a custom one will be established for now.
-dictConfig({
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'default': {
-            'format': st.get_option("logger.messageFormat"),  # Use Streamlit's logger format
-            'datefmt': '%Y-%m-%d %H:%M:%S',
-        },
-    },
-    'handlers': {
-        "console": {
-            'class': 'logging.StreamHandler',
-            'formatter': 'default',
-            'level': st.get_option("logger.level").upper(),  # Use Streamlit's logger level
-            'stream': "ext://sys.stdout",
-        }
-    },
-    'loggers': {
-        'streamlit-ollama': {
-            'handlers': ['console'],
-            'level': st.get_option("logger.level").upper(),  # Use Streamlit's logger level
-            'propagate': False,
-        }
-    }
-})
+log = config.logger()
 
-log = logging.getLogger('streamlit-ollama')
-
-# Ollama avatar and other constants
-ollama_avatar: str = 'images/ollama-avatar.png'
 
 # Streamlit page configuration
+# This controls the browser tab title and icon (favicon)
 st.set_page_config(
     page_title="Streamlit-Ollama",
-    page_icon=ollama_avatar
+    page_icon=config.STREAMLIT_OLLAMA_ASSISTANT_AVATAR
 )
 
-# Load Ollama client configuration from Streamlit secrets
-streamlit_ollama_secrets: dict = {}
-try:
-    streamlit_ollama_secrets: dict = st.secrets.get("streamlit_ollama", {})
-    log.debug(f"Ollama client secrets: {streamlit_ollama_secrets}")
-except Exception as e:
-    log.warning(f"Failed to load Ollama client secrets: {e}")
 
-# Extract host configuration. Assume localhost if not provided.
-ollama_host: str = streamlit_ollama_secrets.get("host", "http://localhost:11434")
-log.debug(f"Ollama host: {ollama_host}")
-
+# Initialize Ollama Client connection to the specified host
 try:
     ollama: OllamaClient = OllamaClient(
-        host=ollama_host
+        host=config.STREAMLIT_OLLAMA_HOST
     )
 except Exception as e:
-    log.error(f"Failed to initialize Ollama Client API: {e}")
+    log.error(f"Failed to initialize Ollama Client API for host {config.STREAMLIT_OLLAMA_HOST}. Error: {e}")
+
 
 # Configuration sidebar
 with st.sidebar:
     st.title("Configuration")
     list_models: ListResponse = ollama.list()
-    models: list = sorted([model.model for model in list_models.models]) # This is so hacky looking it hurts
-    selected_model = st.selectbox('Select a model', options=models, index=0)
-    log.debug(f'Current model selected: {selected_model}')
+    
+    # This is so hacky looking it hurts
+    # The ListResponse.models is a list of Model objects, each having a 'model' attribute
+    # We extract just the model names for display in the selectbox
+    models: list = sorted([model.model for model in list_models.models])
+    
+    # Maintain selected model state across interactions
+    # If not present, default to the first model in the list
+    if 'selected_model_index' not in st.session_state:
+        st.session_state['selected_model_index'] = 0
+
+    selected_model = st.selectbox('Select a model', options=models, index=st.session_state['selected_model_index'])
+    st.session_state['selected_model_index'] = models.index(selected_model)
+    log.debug(f'Current model selected: {selected_model}, index: {st.session_state["selected_model_index"]}')
+
 
 # Main app loop
 st.title('Streamlit-Ollama')
 st.caption('A Streamlit chatbot powered by Ollama.')
 
+# Initialize chat messages in session state rith a greeting
 if "messages" not in st.session_state:
     st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
 
+# Display all messages in the chat history
+# This will re-render on each interaction
 for msg in st.session_state.messages:
-    avatar = ollama_avatar if msg["role"] == "assistant" else None
+    avatar = config.STREAMLIT_OLLAMA_ASSISTANT_AVATAR if msg["role"] == "assistant" else config.STREAMLIT_OLLAMA_USER_AVATAR
     st.chat_message(msg["role"], avatar=avatar).write(msg["content"])
 
+# Chat input box
+# The app will wait here for user input
 if prompt := st.chat_input(placeholder=selected_model):
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
 
-    log.debug(f'User prompt received: {prompt}')
-    log.debug(f'Current messages in session: {st.session_state.messages}')
-
-    # Call Ollama API
+    # Call Ollama API. 
+    # Show a "thinking" spinner while waiting for the response
     with st.spinner("Thinking..."):
-        log.debug(f'Using model: {selected_model} for chat response.')
+        log.debug(f"Using model: {selected_model} for chat response.")
         response_stream: ChatResponse = ollama.chat(model = selected_model, 
                                                     messages = st.session_state.messages,
                                                     stream=True)
 
-        # Within the chat message context...
-        with st.chat_message("assistant", avatar=ollama_avatar):
+        # Within the chat message context, stream the response
+        with st.chat_message("assistant", avatar=config.STREAMLIT_OLLAMA_ASSISTANT_AVATAR):
             def response_streamer():
                  """Generator function to stream response chunks."""
                  for chunk in response_stream:

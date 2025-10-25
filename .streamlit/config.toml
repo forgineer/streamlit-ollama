@@ -1,9 +1,5 @@
 [server]
-runOnSave = true
+#runOnSave = true # Enable hot-reloading of the app when files are saved (when in development mode)
 
 [client]
-toolbarMode = "viewer"
-
-[logger]
-level = "info"
-messageFormat = "%(asctime)s: %(levelname)s: %(message)s"
+toolbarMode = "viewer" # Set the toolbar mode to 'viewer' for a cleaner interface
