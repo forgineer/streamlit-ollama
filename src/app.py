@@ -51,7 +51,10 @@ with st.sidebar:
 # Main app loop
 # Initialize chat messages in session state rith a greeting
 if "messages" not in st.session_state:
-    st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
+    if config.STREAMLIT_OLLAMA_ASSISTANT_GREETING:
+        st.session_state["messages"] = [{"role": "assistant", "content": config.STREAMLIT_OLLAMA_ASSISTANT_GREETING}]
+    else:
+        st.session_state["messages"] = []
 
 # Display all messages in the chat history
 # This will re-render on each interaction
