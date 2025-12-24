@@ -43,7 +43,9 @@ with st.sidebar:
     if 'selected_model_index' not in st.session_state:
         st.session_state['selected_model_index'] = 0
 
-    selected_model = st.selectbox('Select a model', options=models, index=st.session_state['selected_model_index'])
+    selected_model = st.selectbox('Select a model',
+                                  options=models, 
+                                  index=st.session_state['selected_model_index'])
     st.session_state['selected_model_index'] = models.index(selected_model)
     log.debug(f'Current model selected: {selected_model}, index: {st.session_state["selected_model_index"]}')
 
@@ -66,15 +68,16 @@ for msg in st.session_state.messages:
 # The app will wait here for user input
 if prompt := st.chat_input(placeholder=selected_model):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    st.chat_message("user").write(prompt)
+    st.chat_message("user", avatar=config.STREAMLIT_OLLAMA_USER_AVATAR).write(prompt)
 
-    # Call Ollama API. 
+    # Call the Ollama API for a streaming chat response
     # Show a "thinking" spinner while waiting for the response
     with st.spinner("Thinking..."):
         log.debug(f"Using model: {selected_model} for chat response.")
         response_stream: ChatResponse = ollama.chat(model = selected_model, 
                                                     messages = st.session_state.messages,
-                                                    stream=True)
+                                                    stream=True,
+                                                    keep_alive=config.STREAMLIT_OLLAMA_CLIENT_KEEPALIVE)
 
         # Within the chat message context, stream the response
         with st.chat_message("assistant", avatar=config.STREAMLIT_OLLAMA_ASSISTANT_AVATAR):

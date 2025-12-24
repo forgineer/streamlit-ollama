@@ -14,14 +14,25 @@ STREAMLIT_OLLAMA_HOST: str = "http://localhost:11434"
 STREAMLIT_OLLAMA_LOG_LEVEL: str = "INFO"
 STREAMLIT_OLLAMA_LOG_FORMAT: str = "%(asctime)s: %(levelname)s: %(message)s"
 
-# Path to the avatar image used for the assistant and user in the chat interface
+# Path to the avatar image used for the assistant in the chat interface
 STREAMLIT_OLLAMA_ASSISTANT_AVATAR: str = "images/ollama-avatar.png"
-STREAMLIT_OLLAMA_USER_AVATAR: str = None
+STREAMLIT_OLLAMA_USER_AVATAR: str = "😀"
 
 # Custom greeting message for the assistant
 # This will be the initial message from the assistant when the chat starts
 # If set to None or an empty string, no greeting will be shown
 STREAMLIT_OLLAMA_ASSISTANT_GREETING: str = "How can I help you?"
+
+# Set default model selection
+# If None, not specified, or not found, defaults to the first model in the list
+# The name of the model should match exactly as listed by the Ollama client ('ollama list' command)
+# eg. "gemma3:12b", "llama3.1:8b", etc.
+STREAMLIT_OLLAMA_DEFAULT_MODEL: str = None
+
+# Additinal Ollama client configurations defaults
+# Keepalive: Model keep-alive duration (for example 5m or 0 to unload immediately)
+# This is specified in minutes here for simplicity.
+STREAMLIT_OLLAMA_CLIENT_KEEPALIVE: str = "5m"
 
 
 def logger(level: str = STREAMLIT_OLLAMA_LOG_LEVEL, 
