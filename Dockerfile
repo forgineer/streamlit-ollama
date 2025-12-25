@@ -22,4 +22,4 @@ ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.addres
 # docker build -t streamlit-ollama .
 
 # To run the Docker container, run:
-# docker run -d --rm --network host -p 8501:8501 streamlit-ollama
+# docker run -d --rm --network host -p 8501:8501 --restart=unless-stopped streamlit-ollama

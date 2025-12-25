@@ -25,7 +25,6 @@ STREAMLIT_OLLAMA_ASSISTANT_GREETING: str = "How can I help you?"
 
 # Additinal Ollama client configurations defaults
 # Keepalive: Model keep-alive duration (for example 5m or 0 to unload immediately)
-# This is specified in minutes here for simplicity.
 STREAMLIT_OLLAMA_CLIENT_KEEPALIVE: str = "30m"
 
 
