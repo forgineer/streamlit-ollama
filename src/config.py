@@ -8,7 +8,7 @@ import logging
 
 
 # The default Ollama host URL. By default it is assumed to be running on localhost.
-STREAMLIT_OLLAMA_HOST: str = "http://localhost:11434"
+STREAMLIT_OLLAMA_HOST: str = "http://kryten3:11434"
 
 # Logging configurations
 STREAMLIT_OLLAMA_LOG_LEVEL: str = "INFO"
@@ -23,16 +23,10 @@ STREAMLIT_OLLAMA_USER_AVATAR: str = "😀"
 # If set to None or an empty string, no greeting will be shown
 STREAMLIT_OLLAMA_ASSISTANT_GREETING: str = "How can I help you?"
 
-# Set default model selection
-# If None, not specified, or not found, defaults to the first model in the list
-# The name of the model should match exactly as listed by the Ollama client ('ollama list' command)
-# eg. "gemma3:12b", "llama3.1:8b", etc.
-STREAMLIT_OLLAMA_DEFAULT_MODEL: str = None
-
 # Additinal Ollama client configurations defaults
 # Keepalive: Model keep-alive duration (for example 5m or 0 to unload immediately)
 # This is specified in minutes here for simplicity.
-STREAMLIT_OLLAMA_CLIENT_KEEPALIVE: str = "5m"
+STREAMLIT_OLLAMA_CLIENT_KEEPALIVE: str = "30m"
 
 
 def logger(level: str = STREAMLIT_OLLAMA_LOG_LEVEL, 
