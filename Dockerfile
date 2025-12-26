@@ -4,6 +4,7 @@ WORKDIR /streamlit-ollama
 
 # Copy only the necessary files from the build context.
 # Users should clone the repo locally and run `docker build .` from the repo root.
+COPY .streamlit/ ./.streamlit/
 COPY images/ ./images/
 COPY src/ ./src/
 COPY pyproject.toml ./
@@ -21,4 +22,4 @@ ENTRYPOINT ["streamlit", "run", "src/app.py", "--server.port=8501", "--server.ad
 # docker build -t streamlit-ollama .
 
 # To run the Docker container, run:
-# docker run -d --rm --network host -p 8501:8501 --restart=unless-stopped streamlit-ollama
+# docker run -d --restart=unless-stopped --network host -p 8501:8501 -v "$(pwd)/data:/streamlit-ollama/data" streamlit-ollama
