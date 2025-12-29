@@ -6,7 +6,7 @@ configurations and will not accept custom configurations.
 """
 
 # The default Ollama host URL. By default it is assumed to be running on localhost.
-STREAMLIT_OLLAMA_HOST: str = "http://kryten3:11434"
+STREAMLIT_OLLAMA_HOST: str = "http://localhost:11434"
 
 # Page Layout configuration for Streamlit
 STREAMLIT_OLLAMA_PAGE_LAYOUT: str = "wide"  # Options: "centered", "wide"
