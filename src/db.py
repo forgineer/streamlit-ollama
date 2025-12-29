@@ -141,7 +141,6 @@ class ChatDB:
 
         :param chat_id: ID of the chat to retrieve messages for.
         :return: List of message dicts with 'role' and 'content'.
-        :return: Saved chat messages as a list of dicts.
         """
         if self.connection is None:
             log.error("No database connection available. Cannot retrieve messages.")
