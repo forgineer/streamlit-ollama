@@ -4,19 +4,21 @@ This module contains configuration constants and helpful functions for the Strea
 The 'config.toml' file in the .streamlit directory is used for Streamlit-specific 
 configurations and will not accept custom configurations.
 """
-import logging
-
 
 # The default Ollama host URL. By default it is assumed to be running on localhost.
 STREAMLIT_OLLAMA_HOST: str = "http://kryten3:11434"
+
+# Page Layout configuration for Streamlit
+STREAMLIT_OLLAMA_PAGE_LAYOUT: str = "wide"  # Options: "centered", "wide"
 
 # Logging configurations
 STREAMLIT_OLLAMA_LOG_LEVEL: str = "INFO"
 STREAMLIT_OLLAMA_LOG_FORMAT: str = "%(asctime)s: %(levelname)s: %(message)s"
 
 # Path to the avatar image used for the assistant in the chat interface
-STREAMLIT_OLLAMA_ASSISTANT_AVATAR: str = "images/ollama-avatar.png"
-STREAMLIT_OLLAMA_USER_AVATAR: str = "😀"
+STREAMLIT_OLLAMA_LOGO: str = "images/logo.png"
+STREAMLIT_OLLAMA_ASSISTANT_AVATAR: str = "images/assistant-avatar.png"
+STREAMLIT_OLLAMA_USER_AVATAR: str = "images/user-avatar.png"
 
 # Custom greeting message for the assistant
 # This will be the initial message from the assistant when the chat starts
@@ -26,44 +28,3 @@ STREAMLIT_OLLAMA_ASSISTANT_GREETING: str = "How can I help you?"
 # Additinal Ollama client configurations defaults
 # Keepalive: Model keep-alive duration (for example 5m or 0 to unload immediately)
 STREAMLIT_OLLAMA_CLIENT_KEEPALIVE: str = "30m"
-
-
-def logger(level: str = STREAMLIT_OLLAMA_LOG_LEVEL, 
-           format: str = STREAMLIT_OLLAMA_LOG_FORMAT) -> logging.Logger:
-    """
-    Setup and return a logger with the specified level and format.
-
-    :param level: The logging level as supported by Streamlit (e.g., "DEBUG", "INFO").
-    :param format: The logging format string as supported by Streamlit.
-    :return: Configured logger instance.
-    """
-
-    from logging.config import dictConfig
-
-    dictConfig({
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "default": {
-                "format": format,
-                "datefmt": "%Y-%m-%d %H:%M:%S",
-            },
-        },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "formatter": "default",
-                "level": level.upper(),
-                "stream": "ext://sys.stdout",
-            }
-        },
-        "loggers": {
-            "streamlit-ollama": {
-                "handlers": ["console"],
-                "level": level.upper(),
-                "propagate": False,
-            }
-        }
-    })
-
-    return logging.getLogger("streamlit-ollama")

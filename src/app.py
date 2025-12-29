@@ -1,6 +1,7 @@
 import config
 import os
 import streamlit as st
+import utils
 
 from db import ChatDB, ChatExistsError
 from ollama import ChatResponse, Client as OllamaClient
@@ -13,14 +14,15 @@ os.makedirs("data", exist_ok=True)
 
 # Configure logging
 # Streamlit's logging doesn't seem to work as expected; a custom one will be established for now.
-log = config.logger()
+log = utils.logger()
 
 
 # Streamlit page configuration
 # This controls the browser tab title and icon (favicon)
 st.set_page_config(
     page_title="Streamlit-Ollama",
-    page_icon=config.STREAMLIT_OLLAMA_ASSISTANT_AVATAR
+    page_icon=config.STREAMLIT_OLLAMA_LOGO,
+    layout=config.STREAMLIT_OLLAMA_PAGE_LAYOUT
 )
 
 
@@ -58,7 +60,7 @@ def save_chat():
                                              model=st.session_state["selected_model"], 
                                              messages=st.session_state["messages"])
             st.session_state["chat_id"] = chat_id
-            st.success("Chat saved.")
+            st.success("Chat saved!")
         except ChatExistsError as e:
             st.error(str(e))
         except Exception:
@@ -89,17 +91,20 @@ def update_chat_model():
 
 
 with st.sidebar:
+    st.image(config.STREAMLIT_OLLAMA_LOGO)
     st.title('Streamlit-Ollama')
 
+    # New Chat button
+    # Clears current messages and chat ID. Made available only if there is a chat in progress.
     if len(st.session_state["messages"]) > 0:
         if st.button('New Chat', width="stretch"):
             st.session_state["messages"] = []
             st.session_state["chat_id"] = None
             st.rerun()
 
-    # Fetch available models from Ollama
+    # Fetch available models from Ollama server
     if ollama is None:
-        st.warning("Ollama client unavailable; model list unavailable.")
+        st.error("Ollama client unavailable; model list unavailable.")
         models = []
     else:
         list_models = ollama.list()
@@ -120,6 +125,7 @@ with st.sidebar:
         else:
             st.session_state['selected_model_index'] = 0  # Fallback to the first model in the list
 
+    # Model selection dropdown
     st.session_state["selected_model"] = st.selectbox('Select a model', 
                                                       options=models, 
                                                       index=st.session_state['selected_model_index'],
@@ -127,6 +133,7 @@ with st.sidebar:
     st.session_state['selected_model_index'] = models.index(st.session_state["selected_model"])
     log.debug(f'Current model selected: {st.session_state["selected_model"]}, index: {st.session_state["selected_model_index"]}')
 
+    # Save Chat / Delete Chat buttons
     if st.session_state["chat_id"] is None and len(st.session_state["messages"]) > 0:
         if st.button("Save Chat", width="stretch"):
             save_chat()
@@ -134,6 +141,8 @@ with st.sidebar:
         if st.button("Delete Chat", width="stretch", type="primary"):
             delete_chat(chat_id=st.session_state["chat_id"])
 
+    # Display saved chats as buttons
+    # Clicking a button loads that chat's messages into the main chat area
     with st.container():
         st.markdown("### Saved Chats")
         saved_chats = chat_db.list_chats()
@@ -143,7 +152,7 @@ with st.sidebar:
         else:
             for chat in saved_chats:
                 chat_id, chat_name, chat_model, chat_timestamp = chat
-                if st.button(f"{chat_name}\r\n ({chat_model})", key=f"chat_{chat_id}"):
+                if st.button(f"{chat_name}\r\n ({chat_model})", key=f"chat_{chat_id}", width="stretch"):
                     # Load chat messages from the database
                     st.session_state["messages"] = chat_db.get_chat_messages(chat_id=chat_id)
                     st.session_state["selected_model"] = chat_model
@@ -151,7 +160,7 @@ with st.sidebar:
                     st.rerun()
 
 
-# Initialize chat messages in session state with a greeting
+# Initialize chat messages in session state with a greeting (if configured)
 if len(st.session_state["messages"]) == 0:
     if config.STREAMLIT_OLLAMA_ASSISTANT_GREETING:
         st.session_state["messages"] = [{"role": "assistant", "content": config.STREAMLIT_OLLAMA_ASSISTANT_GREETING}]
@@ -159,19 +168,19 @@ if len(st.session_state["messages"]) == 0:
         st.session_state["messages"] = []
 
 
-# Display all messages in the chat history
-# This will re-render on each interaction
+# Write out the chat messages to the screen
 for msg in st.session_state["messages"]:
     avatar = config.STREAMLIT_OLLAMA_ASSISTANT_AVATAR if msg["role"] == "assistant" else config.STREAMLIT_OLLAMA_USER_AVATAR
-    st.chat_message(msg["role"], avatar=avatar).write(msg["content"])
+    st.chat_message(msg["role"], width="stretch", avatar=avatar).write(msg["content"])
 
 
 # Chat input box
 # The app will wait here for user input
 if prompt := st.chat_input(placeholder=st.session_state["selected_model"]):
     st.session_state["messages"].append({"role": "user", "content": prompt})
-    st.chat_message("user", avatar=config.STREAMLIT_OLLAMA_USER_AVATAR).write(prompt)
+    st.chat_message("user", avatar=config.STREAMLIT_OLLAMA_USER_AVATAR, width="stretch").write(prompt)
 
+    # Save the user message to the database if chat is saved
     if st.session_state["chat_id"]:
         chat_db.save_chat_message(chat_id=st.session_state["chat_id"],
                                   model=st.session_state["selected_model"],
@@ -188,13 +197,14 @@ if prompt := st.chat_input(placeholder=st.session_state["selected_model"]):
                                                     keep_alive=config.STREAMLIT_OLLAMA_CLIENT_KEEPALIVE)
 
         # Within the chat message context, stream the response
-        with st.chat_message("assistant", avatar=config.STREAMLIT_OLLAMA_ASSISTANT_AVATAR):
+        with st.chat_message("assistant", avatar=config.STREAMLIT_OLLAMA_ASSISTANT_AVATAR, width="stretch"):
             def response_streamer():
                  """Generator function to stream response chunks."""
                  for chunk in response_stream:
                      yield chunk.message.content
             
             # Stream the response and capture the full content for the session state
+            # Save the full response to the database if chat is saved
             full_response: str = st.write_stream(response_streamer)  # Dynamically update the assistant's message
             st.session_state["messages"].append({"role": "assistant", "content": full_response})
             if st.session_state["chat_id"]:

@@ -1,16 +1,19 @@
-import config
+import utils
 
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from streamlit.connections import SQLConnection
 
+
 # Configure logging
 # Streamlit's logging doesn't seem to work as expected; a custom one will be established for now.
-log = config.logger()
+log = utils.logger()
 
 
 class ChatExistsError(Exception):
-    """Raised when attempting to create a chat with a name that already exists."""
+    """
+    Raised when attempting to create a chat with a name that already exists.
+    """
     pass
 
 
@@ -19,6 +22,12 @@ class ChatDB:
     Database Connection class for simplified database interactions.
     """
     def __init__(self, connection: SQLConnection):
+        """
+        Class initializer. Sets up the database connection and initializes tables if they do not exist.
+        
+        :param connection: SQLConnection instance for DB interactions.
+        :return: None
+        """
         try:
             self.connection = connection
 
@@ -60,6 +69,11 @@ class ChatDB:
     def save_chat(self, name: str, model: str, messages: list[dict]) -> int:
         """
         Save a chat conversation to the database.
+
+        :param name: Unique name/description for the chat.
+        :param model: Model used for the chat.
+        :param messages: List of message dicts with 'role' and 'content'.
+        :return: The chat ID of the saved chat.
         """
         if self.connection is None:
             raise RuntimeError("DB connection not available")
@@ -100,6 +114,10 @@ class ChatDB:
     def save_chat_message(self, chat_id: int, model:str, role: str, content: str):
         """
         Add a message to a specific chat.
+
+        :param chat_id: ID of the chat to add the message to.
+        :param model: Model used for the chat.
+        :return: None
         """
         if self.connection is None:
             log.error("No database connection available. Cannot add message.")
@@ -120,6 +138,10 @@ class ChatDB:
     def get_chat_messages(self, chat_id: int):
         """
         Retrieve messages for a specific chat ID.
+
+        :param chat_id: ID of the chat to retrieve messages for.
+        :return: List of message dicts with 'role' and 'content'.
+        :return: Saved chat messages as a list of dicts.
         """
         if self.connection is None:
             log.error("No database connection available. Cannot retrieve messages.")
@@ -142,6 +164,10 @@ class ChatDB:
     def update_chat_model(self, chat_id: int, model: str):
         """
         Update the model used for a specific chat.
+
+        :param chat_id: ID of the chat to update.
+        :param model: New model name to set.
+        :return: None
         """
         if self.connection is None:
             log.error("No database connection available. Cannot update chat model.")
@@ -162,6 +188,9 @@ class ChatDB:
     def delete_chat(self, chat_id: int):
         """
         Delete a chat and its messages from the database.
+
+        :param chat_id: ID of the chat to delete.
+        :return: None
         """
         if self.connection is None:
             log.error("No database connection available. Cannot delete chat.")
@@ -182,6 +211,8 @@ class ChatDB:
     def list_chats(self):
         """
         List saved chats from the SQLite database.
+
+        :return: List of tuples with chat metadata (id, name, model, timestamp).
         """
         if self.connection is None:
             log.error("No database connection available. Cannot list chats.")
@@ -201,6 +232,8 @@ class ChatDB:
     def last_used_model(self):
         """
         Retrieve the last used model from saved chats.
+
+        :return: The last used model name, or None if no chats exist.
         """
         if self.connection is None:
             log.error("No database connection available. Cannot retrieve last used model.")
