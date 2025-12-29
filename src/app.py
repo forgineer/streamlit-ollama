@@ -63,7 +63,8 @@ def save_chat():
             st.success("Chat saved!")
         except ChatExistsError as e:
             st.error(str(e))
-        except Exception:
+        except Exception as e:
+            log.exception("Unexpected error saving chat")
             st.error("Unexpected error saving chat — check logs.")
         st.rerun()
 
