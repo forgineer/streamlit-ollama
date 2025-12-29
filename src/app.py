@@ -153,7 +153,7 @@ with st.sidebar:
         else:
             for chat in saved_chats:
                 chat_id, chat_name, chat_model, chat_timestamp = chat
-                if st.button(f"{chat_name}\r\n ({chat_model})", key=f"chat_{chat_id}", width="stretch"):
+                if st.button(f"{chat_name}\n ({chat_model})", key=f"chat_{chat_id}", width="stretch"):
                     # Load chat messages from the database
                     st.session_state["messages"] = chat_db.get_chat_messages(chat_id=chat_id)
                     st.session_state["selected_model"] = chat_model
