@@ -21,7 +21,7 @@ class ChatDB:
     """
     Database Connection class for simplified database interactions.
     """
-    def __init__(self, connection: SQLConnection):
+    def __init__(self, connection: SQLConnection) -> None:
         """
         Class initializer. Sets up the database connection and initializes tables if they do not exist.
         
@@ -105,18 +105,20 @@ class ChatDB:
             except IntegrityError as ie:
                 db_session.rollback()
                 # re-raise a clearer, domain-specific error
-                raise ChatExistsError(f"Chat with name '{name}' already exists") from ie
+                raise ChatExistsError("Chat with this name already exists.") from ie
             except Exception:
                 db_session.rollback()
                 log.exception("Unexpected error saving chat")
                 raise
 
-    def save_chat_message(self, chat_id: int, model:str, role: str, content: str):
+    def save_chat_message(self, chat_id: int, model:str, role: str, content: str) -> None:
         """
         Add a message to a specific chat.
 
         :param chat_id: ID of the chat to add the message to.
         :param model: Model used for the chat.
+        :param role: Role of the message sender (e.g., 'user', 'assistant').
+        :param content: Content of the message.
         :return: None
         """
         if self.connection is None:
@@ -135,7 +137,7 @@ class ChatDB:
         except Exception as e:
             log.error(f"Failed to add message to chat ID {chat_id} in database. Error: {e}")
 
-    def get_chat_messages(self, chat_id: int):
+    def get_chat_messages(self, chat_id: int) -> list[dict]:
         """
         Retrieve messages for a specific chat ID.
 
@@ -160,7 +162,7 @@ class ChatDB:
             log.error(f"Failed to retrieve messages for chat ID {chat_id} from database. Error: {e}")
             return []
 
-    def update_chat_model(self, chat_id: int, model: str):
+    def update_chat_model(self, chat_id: int, model: str) -> None:
         """
         Update the model used for a specific chat.
 
@@ -184,7 +186,7 @@ class ChatDB:
         except Exception as e:
             log.error(f"Failed to update model for chat ID {chat_id} in database. Error: {e}")
 
-    def delete_chat(self, chat_id: int):
+    def delete_chat(self, chat_id: int) -> None:
         """
         Delete a chat and its messages from the database.
 
@@ -207,7 +209,7 @@ class ChatDB:
         except Exception as e:
             log.error(f"Failed to delete chat ID {chat_id} from database. Error: {e}")
 
-    def list_chats(self):
+    def list_chats(self) -> list[tuple]:
         """
         List saved chats from the SQLite database.
 
@@ -228,7 +230,7 @@ class ChatDB:
             log.error(f"Failed to fetch saved chats from database. Error: {e}")
             return []
     
-    def last_used_model(self):
+    def last_used_model(self) -> str | None:
         """
         Retrieve the last used model from saved chats.
 

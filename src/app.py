@@ -28,8 +28,13 @@ st.set_page_config(
 
 # Initialize ChatDB instance
 # This will manage chat history persistence
-connection: SQLConnection = st.connection(name="streamlit_ollama_db", type="sql")
-chat_db: ChatDB = ChatDB(connection=connection)
+try:
+    connection: SQLConnection = st.connection(name="streamlit_ollama_db", type="sql")
+    chat_db: ChatDB = ChatDB(connection=connection)
+except Exception as e:
+    log.error(f"Failed to initialize ChatDB. Error: {e}")
+    st.error("Failed to initialize chat database; chat history will not be saved.")
+    connection = chat_db = None
 
 
 # Initialize Ollama Client connection to the specified host
@@ -49,7 +54,7 @@ if "messages" not in st.session_state:
 
 
 @st.dialog("Save your chat", width="medium")
-def save_chat():
+def save_chat() -> None:
     """
     Dialog to save the current chat session to the database.
     """
@@ -70,7 +75,7 @@ def save_chat():
 
 
 @st.dialog("Are you sure you want to delete this chat?", width="medium")
-def delete_chat(chat_id: int):
+def delete_chat(chat_id: int) -> None:
     """
     Dialog to ensure you want to delete the saved chat.
     """
@@ -81,7 +86,7 @@ def delete_chat(chat_id: int):
         st.rerun()
 
 
-def update_chat_model():
+def update_chat_model() -> None:
     """
     Update the model used for the current chat in the database.
     Is called when the model selection changes in the sidebar.
