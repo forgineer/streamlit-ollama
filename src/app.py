@@ -139,6 +139,17 @@ with st.sidebar:
     st.session_state['selected_model_index'] = models.index(st.session_state["selected_model"])
     log.debug(f'Current model selected: {st.session_state["selected_model"]}, index: {st.session_state["selected_model_index"]}')
 
+    # Determine if "Show Thinking" toggle should be displayed
+    show_thinking: bool = None
+
+    # Capture capabilities of the selected model
+    show_response = ollama.show(st.session_state["selected_model"])
+    model_capabilities = show_response.get("capabilities", [])
+    log.debug(f'Capabilities of {st.session_state["selected_model"]}: {model_capabilities}')
+
+    if 'thinking' in model_capabilities:
+        show_thinking = st.toggle("Show Thinking", value=False)
+
     # Save Chat / Delete Chat buttons
     if st.session_state["chat_id"] is None and len(st.session_state["messages"]) > 0:
         if st.button("Save Chat", width="stretch"):
@@ -194,27 +205,37 @@ if prompt := st.chat_input(placeholder=st.session_state["selected_model"]):
                                   content=prompt)
 
     # Call the Ollama API for a streaming chat response
-    # Show a "thinking" spinner while waiting for the response
-    with st.spinner("Thinking..."):
+    # Show a spinner while waiting for the response
+    with st.spinner("Preparing response..."):
         log.debug(f"Using model: {st.session_state["selected_model"]} for chat response.")
+        log.debug(f"Thinking enabled: {show_thinking}")
         response_stream: ChatResponse = ollama.chat(model = st.session_state["selected_model"], 
                                                     messages = st.session_state["messages"],
                                                     stream=True,
+                                                    think=show_thinking,
                                                     keep_alive=config.STREAMLIT_OLLAMA_CLIENT_KEEPALIVE)
 
         # Within the chat message context, stream the response
         with st.chat_message("assistant", avatar=config.STREAMLIT_OLLAMA_ASSISTANT_AVATAR, width="stretch"):
-            def response_streamer():
+            def thinking_streamer():
+                """Generator function to stream thinking chunks."""
+                for chunk in response_stream:
+                    if chunk.message.thinking:
+                        yield chunk.message.thinking
+
+            def content_streamer():
                  """Generator function to stream response chunks."""
                  for chunk in response_stream:
                      yield chunk.message.content
             
+
             # Stream the response and capture the full content for the session state
             # Save the full response to the database if chat is saved
-            full_response: str = st.write_stream(response_streamer)  # Dynamically update the assistant's message
-            st.session_state["messages"].append({"role": "assistant", "content": full_response})
+            content_response: str = st.write_stream(content_streamer)  # Dynamically update the assistant's message
+
+            st.session_state["messages"].append({"role": "assistant", "content": content_response})
             if st.session_state["chat_id"]:
                 chat_db.save_chat_message(chat_id=st.session_state["chat_id"],
                                           model=st.session_state["selected_model"],
                                           role="assistant",
-                                          content=full_response)
+                                          content=content_response)
